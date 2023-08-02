@@ -1,0 +1,101 @@
+Scrolling
+---------
+
+823E.l: Scroll speed.
+Value added to ground sprites y to simulate scrolling. =00008000
+
+823A.w: Boss timer.
+
+823C.b: Set to $10 when boss destroyed and can move on.
+
+8268.l: Main scrolling counter.
+It determines player location across all five stages.
+A loop corresponds to the range ($0000,$F000).
+
+
+Player
+------
+
+Points and lives are stored as mutiples of 10, with hexadecimal digits.
+A score value displayed as "12340" is $1234 in memory.
+Last zero is cosmetic, hence 0 is displayed as "00".
+
+B28E.w: Player X
+B290.w: Player Y
+B292.w: Player state
+0=Playing
+1=Exploding
+2=Landing
+3=Waiting to respawn
+B29C.w: 1up counter
+At some points in the game, a 1up will appear from a destroyed structure.
+This counter is increased whenever this happens.
+Once it reaches 3, 1ups will stop appearing.
+B29E.w: Player lives
+B2A0.b: Difficulty (0,7)
+Influences speed of enemy bullets.
+B2A2.l: Score
+B2A6.l: Next extend value
+B2AE.w,B2B0.x: Player sprite tilt
+B2B6.b: Bombs
+B2B7.b: Weapon type (0=red 1=green 2=blue 3=yellow)
+B2B8.b: Weapon power. Valid range is (0,10).
+
+B2BC: Player projectiles array.
+
+
+Objects
+-------
+
+B6EC.w: Freeze enemies if !=0.
+This value is set to FFFF to stop enemies during some sequences, such as the
+chevron transition effects after player explodes.
+
+Object arrays:
+Arrays have 31 elements.
+Object structure is 48 bytes.
+
+B6F0 - BCC0: Flying enemies.
+Carrier and power are inserted at start, helis from end.
+
+BCF0 - C2C0: Ground enemies.
+
+C2F0 - C8C0: Craters.
+
+C93A: Array of active enemy bullets.
+
+Misc
+----
+
+F002.w: Counter involved in timing some sprite animations.
+F602.b: Player control bits. Also used in landing and attract.
+Bits are _F_B LRDU
+F604.b: Pause when =0x80
+F61A.w: Respite timer.
+If this value is above zero, it will decrease and enemies won't shoot.
+It's used to provide the player a moment of respite right after
+respawning.
+F620.w: Scrolling horizontal offset for background.
+F622.w: Scrolling horizontal offset for sprites.
+F624.w: Stage number.
+F62A.b: VBLANK synchronization related.
+
+FE00: Stack.
+
+Configuration
+-------------
+
+FFD0.l: "KANO"
+Magic value checked at boot. If it's not there, config will be initialized
+with default values.
+FFD4.l: High score.
+FFD9.b: Configuration menu lives, range (0,3).
+FFDC.b: Extra lives setting.
+Values:
+0="70000,200000"
+1="50000,150000"
+2="10000 only"
+3="No extend"
+This is used to index an array at ROM:22EA which contains the actual point
+values for first extend. Second extend values are stored at ROM:22FA.
+FFDF.b: Configuration difficulty (0,7).

@@ -1,0 +1,61 @@
+The jump table at 3FFE maps an object id to an update function.
+
+┌────┬──────────┬───────────────────┬────────────────────────────────────┐
+│ id │ function │     behavior      │                name                │
+├────┼──────────┼───────────────────┼────────────────────────────────────┤
+│  0 │ 00000000 │                   │                                    │
+│  1 │ 000040da │ Helis Stage 1     │ Combat Helicopter 1                │
+│  2 │ 0000411e │ Helis Stage 2     │ Combat Helicopter 2                │
+│  3 │ 000041fc │ Helis Stage 3     │ Combat Helicopter 3                │
+│  4 │ 000042e8 │ Helis Stage 4     │ Combat Helicopter 4                │
+│  5 │ 00004418 │ Helis Stage 5     │ Combat Helicopter 5                │
+│  6 │ 0000464a │ Helis Stage 6     │ Combat Helicopter 6                │
+│  7 │ 000042e8 │ Helis Stage 4     │ Combat Helicopter 7                │
+│  8 │ 0000411e │ Helis Stage 2     │ Combat Helicopter 8                │
+│  9 │ 00004418 │ Helis Stage 5     │ Combat Helicopter 9                │
+│  A │ 000041fc │ Helis Stage 3     │ Combat Helicopter 10               │
+│  B │ 00004750 │                   │ Transport CH-46                    │
+│  C │ 00004d42 │                   │ Long range bomber                  │
+│  D │ 00004dec │                   │ Large transport aircraft Otakebi   │
+│  E │ 0000489c │ Turret            │ Round turret on square base        │
+│  F │ 0000491e │ Turret attachment │ Yellow turret attachment           │
+│ 10 │ 000048fa │                   │ Tank                               │
+│ 11 │ 0000495c │ Artillery         │ Underground artillery              │
+│ 12 │ 00004aa0 │ Static            │ Static T building                  │
+│ 13 │ 00004b06 │                   │ Hovercraft Ablage                  │
+│ 14 │ 000049ce │                   │ Torpedo boat                       │
+│ 15 │ 00004ace │                   │ Boat                               │
+│ 16 │ 00004bdc │                   │ Green launcher (horizontal)        │
+│ 17 │ 0000489c │ Turret            │ Ship's static main gun             │
+│ 18 │ 00004aa0 │ Static            │ Star bonus                         │
+│ 19 │ 00004aa0 │ Static            │ Crater left by tanks               │
+│ 1A │ 00004aa0 │ Static            │ Crater left by main guns           │
+│ 1B │ 0000495c │ Artillery         │ Cross artillery                    │
+│ 1C │ 00004cc2 │                   │ Green launcher (vertical)          │
+│ 1D │ 0000479a │                   │ Power-up                           │
+│ 1E │ 000055ac │                   │ Boss 1                             │
+│ 1F │ 00004bd2 │                   │ Boat (move and stop)               │
+│ 20 │ 00005670 │                   │ Boss 2                             │
+│ 21 │ 000056be │                   │ Boss 3 low                         │
+│ 22 │ 000056d4 │                   │ Boss 3 high                        │
+│ 23 │ 000056e4 │                   │ Boss 4 orange                      │
+│ 24 │ 000056ec │                   │ Boss 4 grey                        │
+│ 25 │ 000056f4 │                   │ Boss 5                             │
+│ 26 │ 0000575e │                   │ Boss 6 blue                        │
+│ 27 │ 00005770 │                   │ Boss 6 green                       │
+│ 28 │ 00005782 │                   │ Boss 7 left                        │
+│ 29 │ 000057b0 │                   │ Boss 7 right                       │
+│ 2A │ 000057da │                   │ Boss 8 low                         │
+│ 2B │ 000057e2 │                   │ Boss 8 high                        │
+│ 2C │ 000057ee │                   │ Boss 9 green                       │
+│ 2D │ 000057f6 │                   │ Boss 9 blue                        │
+│ 2E │ 000057fe │                   │ Boss 10 left                       │
+│ 2F │ 00005878 │                   │ Boss 10 right                      │
+│ 30 │ 0000489c │ Turret            │ Round turret                       │
+│ 31 │ 00004aa0 │ Static            │ Hangar roof                        │
+│ 32 │ 00004aa0 │ Static            │ Crater hole in buildings           │
+│ 33 │ 0000491e │ Turret attachment │ Grey turret attachment             │
+│ 34 │ 00004aa0 │ Static            │ Crater left by bosses              │
+│ 35 │ 00004aa0 │ Static            │ Crater left by turrets (invisible) │
+│ 36 │ 000057c2 │                   │ Boss 7 middle                      │
+└────┴──────────┴───────────────────┴────────────────────────────────────┘

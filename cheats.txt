@@ -1,0 +1,22 @@
+Game genie codes
+----------------
+
+Infinite lives:
+29BC: SBCD D1,D0 ; 8101
+----> NOP ; 4E71
+REYT-A6Z6
+
+Invincibility:
+2B02: BEQ.b loc_00002B06 ; 6702
+----> NOP ; 4E71
+REZT-A6TC
+
+Faster player:
+24AC: ADDQ.w #1,D2 ; 5442
+----> ADDQ.w #2,D2 ; 5842
+JJWA-BTZN
+
+One-hit kills:
+3C90: BPL.b +$6 ; 6A06
+----> NOP ; 4E71
+RE8A-A6YT
