@@ -3262,26 +3262,33 @@ loc_0000323E:
 	SUBA.w	D6, A2
 	DBF	D7, loc_0000323E
 	NOP
-loc_0000324C: ; @ Common insertion
-	MOVE.w	$8(A3), D1
-	BEQ.b	loc_00003280
-	BSR.w	loc_00003282
-	BSET.b	#6, $1(A2)
+loc_0000324C:
+	; @ Object construction
+	; Inputs:
+	;	A2=Self array address
+	;	A3=$22956 table related entry
+	;
+	MOVE.w	$8(A3), D1 ; D1=attach
+	BEQ.b	loc_00003280 ; Branch if nothing attached
+	BSR.w	loc_00003282 ; Instance attachment
+	BSET.b	#6, $1(A2) ; If attachment exists set those flags
 	BSET.b	#7, $1(A2)
 	MOVEA.l	A2, A4
 loc_00003264:
+	; Insert the attached object if there is room
 	TST.b	(A2)
 	BEQ.b	loc_00003272
 	ADDA.w	#$0030, A2
 	DBF	D7, loc_00003264
 	RTS
 loc_00003272:
+	; Attached and base fill their respective attach pointers
 	MOVE.l	A2, $10(A4)
-	BSR.w	loc_00003280
+	BSR.w	loc_00003280 ; Instance self
 	MOVE.l	A4, $10(A2)
 	RTS
 loc_00003280:
-	MOVE.w	(A3), D1
+	MOVE.w	(A3), D1 ; D1=id
 loc_00003282:
 	MOVE.b	D1, (A2)
 	MOVE.b	D3, $2(A2)
@@ -3289,9 +3296,9 @@ loc_00003282:
 	ANDI.b	#$F0, D1
 	MOVE.b	D1, $1(A2)
 	CLR.w	$4(A2)
-	LEA	$FFFFB6EE.w, A6 ;
-	ADDI.b	#$21, (A6)
-	ANDI.b	#$7F, (A6)
+	LEA	$FFFFB6EE.w, A6 ; Counter for ?
+	ADDI.b	#$21, (A6) ; Add 33
+	ANDI.b	#$7F, (A6) ; Cap to 127
 	MOVE.b	(A6), $3(A2)
 	MOVE.w	$2(A3), D1 ; Hit points from spawn data
 	LSL.w	#5, D1 ; D1*=32
@@ -3306,11 +3313,11 @@ loc_00003282:
 	SUBQ.w	#1, D1
 	MOVE.w	D1, $E(A2) ; Hit points=D1
 	MOVE.w	D1, $16(A2) ; Copy to max hit points. Used as ref for sparks and flashing
-	MOVE.w	D4, $6(A2)
-	MOVE.w	D5, $A(A2)
-	CLR.w	$24(A2)
-	MOVE.w	D0, $26(A2)
-	MOVE.w	$4(A3), D1
+	MOVE.w	D4, $6(A2) ; x
+	MOVE.w	D5, $A(A2) ; y
+	CLR.w	$24(A2) ; Reset sequence timer
+	MOVE.w	D0, $26(A2) ; Sequence
+	MOVE.w	$4(A3), D1 ; Grounded flag
 	MOVE.b	D1, $14(A2)
 	CLR.b	$15(A2)
 	CLR.b	$18(A2)
@@ -3597,6 +3604,19 @@ loc_000035E4:
 loc_000035E8:
 	RTS
 loc_000035EA:
+; @ Build enemy
+; Input:
+; 	A1=$92800 entry
+;		0(A1).b=y
+;		1(A1).b=$22956 idx
+;		2(A1).w=param / sequence
+; Output:
+;	A3=$22956 entry
+;	D0=sequence
+;	D3=angle
+;	D4=x
+;	D5=y
+;
 	MOVE.b	$1(A1), D3 ; D3=A1[1] A1=929E8
 	ANDI.w	#$003F, D3 ; D3 is in range (0,63)
 	LSL.w	#4, D3 ; D3*=16 (range is 16,1008 | 0)
@@ -3604,30 +3624,30 @@ loc_000035EA:
 	ADDA.w	D3, A3
 	MOVEA.l	$C(A3), A2 ; A2=22956+A1[1]*16 +12 (last long of item)
 	JMP	(A2) ; @ Spawns an enemy
-loc_00003602: ; @ Combat helicopter
+loc_00003602: ; @ 4 Combat helicopter
 	MOVE.w	$2(A1), D4 ; D4=x
 	LSL.w	#5, D4 ; D4*=32
 	ADDI.w	#$0080, D4 ; x+=128
-	ADD.w	$FFFFF622.w, D4 ; x+=scroll offset
-	BSR.w	loc_00007D88 ; D1=rand
+	ADD.w	$FFFFF622.w, D4 ; x+=scroll_offset_x
+	BSR.w	loc_00007D88_rand ; D0=rand
 	ANDI.w	#$003F, D0 ; D0 is y offset (0,63)
 	MOVE.w	D0, D5
 	ADDI.w	#$0010, D5 ; D5+=16
 	MOVEQ	#$00000010, D3; Affects trajectory x offset to player
 	RTS
-loc_00003622:
-	BSR.w	loc_00007D88	;Predicted (Offset array entry)
+loc_00003622: ; @ 1
+	BSR.w	loc_00007D88_rand
 	MOVE.w	D0, D4
 	ANDI.w	#$00F0, D4
 	ADDI.w	#$00C0, D4
-	BSR.w	loc_00007D88
+	BSR.w	loc_00007D88_rand
 	ANDI.w	#$003F, D0
 	MOVE.w	D0, D5
 	ADDI.w	#$0010, D5
 	MOVEQ	#$00000010, D3
 	RTS
-loc_00003642:
-	MOVE.w	$2(A1), D5	;Predicted (Offset array entry)
+loc_00003642: ; @ 3
+	MOVE.w	$2(A1), D5
 	BTST.l	#2, D5
 	BNE.b	loc_00003652
 	MOVE.w	#$0210, D4
@@ -3641,8 +3661,10 @@ loc_00003656:
 	ADDI.w	#$005E, D5
 	MOVEQ	#$00000010, D3
 	RTS
-loc_0000366A:
-	CMPI.w	#$00F0, $FFFFB28E	;Predicted (Offset array entry)
+loc_0000366A: ; @ 2
+	; Position x opposite to player.
+	; D4=(player.x<240)?328:136
+	CMPI.w	#$00F0, $FFFFB28E ; Player.x
 	BCC.b	loc_0000367A
 	MOVE.w	#$0148, D4
 	BRA.b	loc_0000367E
@@ -3650,7 +3672,7 @@ loc_0000367A:
 	MOVE.w	#$0088, D4
 loc_0000367E:
 	ADD.w	$FFFFF622.w, D4
-	BSR.w	loc_00007D88
+	BSR.w	loc_00007D88_rand
 	ANDI.w	#$003F, D0
 	MOVE.w	D0, D5
 	ADDI.w	#$0010, D5
@@ -3687,7 +3709,7 @@ loc_000036E6:
 	BEQ.b	loc_000036DC
 	LEA	loc_00022C16, A3
 	BRA.b	loc_00003698
-loc_000036F6:
+loc_000036F6: ; @ 7
 	BSR.w	loc_0000370E	;Predicted (Offset array entry)
 	CMPI.b	#4, D3
 	BEQ.b	loc_0000370C
@@ -3696,8 +3718,13 @@ loc_000036F6:
 	LEA	loc_00022BC6, A3
 loc_0000370C:
 	RTS
-loc_0000370E: ; @ Tank spawning. or other trajetory users
-	MOVE.w	$2(A1), D0
+loc_0000370E:
+	; 0 Get sequence data for trajectory user
+	; Output:
+	;	D0=sequence
+	;	D3=
+	;	D4,D5=starting position
+	MOVE.w	$2(A1), D0 ; D0=Sequence...
 	ADD.w	D0, D0
 	ADD.w	D0, D0
 	LEA	loc_00096800, A2 ; Trajectories
@@ -4349,32 +4376,34 @@ loc_00003FF0:; @ Enemy AI
 	MOVEA.l	(A0,D0.w), A0 ; A0=*(loc_00003FFE+D0.w)
 	JMP	(A0)
 loc_00003FFE:
-; @ Ai jump table here
+; @ AI jump table here
 ; 00000000
 ; 000040DA
 ; 0000411E
 ; ..
-loc_000040DA: ; @ Attack helicopter 1
+loc_000040DA:
+	; @ Helicopter 1
 	MOVE.l	$FFFF823E, D0
-	ADD.l	D0, $A(A2)
-	CMPI.w	#$0010, $4(A2)
+	ADD.l	D0, $A(A2) ; y
+	CMPI.w	#$0010, $4(A2) ; timer
 	BCS.b	loc_000040F8
 	CLR.w	$4(A2)
 	BSR.w	loc_000054DA
 	BSR.w	loc_00005560
 loc_000040F8:
 	CLR.w	D0
-	MOVE.b	$2(A2), D0
+	MOVE.b	$2(A2), D0 ; angle
 	ADD.w	D0, D0
 	ADD.w	D0, D0
 	ADD.w	D0, D0
 	LEA	loc_000064F8, A0
 	MOVE.l	(A0,D0.w), D2
-	ADD.l	D2, $6(A2)
+	ADD.l	D2, $6(A2) ; x
 	MOVE.l	$4(A0,D0.w), D3
 	ADD.l	D3, $A(A2)
 	BRA.w	loc_000052E8
-loc_0000411E: ; @ Attack helicopter 2
+loc_0000411E:
+	; @ Helicopter 2
 	BSR.w	loc_000052E8	;Predicted (Offset array entry)
 	TST.b	$24(A2)
 	BEQ.b	loc_00004188
@@ -4446,6 +4475,7 @@ loc_000041B2:
 loc_000041F4:
 	RTS
 loc_000041FC:
+	; @ Helicopter 3
 	BSR.w	loc_000052E8	;Predicted (Offset array entry)
 	BTST.b	#0, $24(A2)
 	BEQ.b	loc_00004264
@@ -4516,6 +4546,7 @@ loc_000042A4:
 loc_000042E6:
 	RTS
 loc_000042E8:
+	; @ Helicopter 4
 	BSR.w	loc_000052E8	;Predicted (Offset array entry)
 	TST.b	$24(A2)
 	BEQ.w	loc_00004386
@@ -4552,7 +4583,7 @@ loc_00004350:
 	MOVEQ	#1, D0
 	MOVE.b	D0, $25(A2)
 	MOVE.w	D0, $26(A2)
-	BSR.w	loc_00007D88
+	BSR.w	loc_00007D88_rand
 	ANDI.w	#$01FF, D0
 	MOVE.w	D0, D3
 	MOVEQ	#$00000010, D4
@@ -4830,7 +4861,7 @@ loc_000046BC:
 loc_000046BE:
 	MOVE.b	#1, $24(A2)
 	MOVE.w	#$0042, $26(A2)
-	BSR.w	loc_00007D88
+	BSR.w	loc_00007D88_rand
 	ANDI.l	#$0000000C, D0
 	SWAP	D0
 	LSR.l	#4, D0
@@ -4874,7 +4905,7 @@ loc_0000470C:
 loc_0000474E:
 	RTS
 loc_00004750:
-	; @ Behavior: Transport
+	; @ Transport (power-up carrier)
 	BSR.w	loc_00004E74
 	BSR.w	loc_00004AAA
 	BTST.b	#3, $1(A2)
@@ -4898,7 +4929,7 @@ loc_00004786:
 	ADDI.w	#$002C, D1
 	BRA.w	loc_00005370
 loc_0000479A:
-	; @ Behavior: Power-up (donburi pattern)
+	; @ Power-up (donburi pattern)
 	BTST.b	#0, $1(A2)
 	BNE.w	loc_0000482A
 	MOVE.w	#$0130, D0
@@ -4975,21 +5006,22 @@ loc_00004856:
 	RTS
 loc_0000487C:
 loc_0000489C:
+	; @ Turret
 	MOVE.l	$FFFF823E, D0
-	ADD.l	D0, $A(A2)
-	BSR.w	loc_00004AAA
-	MOVE.b	$5(A2), D0
+	ADD.l	D0, $A(A2) ; Increase y with scroll
+	BSR.w	loc_00004AAA ; Static behavior
+	MOVE.b	$5(A2), D0 ; D0=self.timer
 	ANDI.b	#$0F, D0
 	BNE.b	loc_000048C6
 	MOVE.b	$2(A2), D0
 	MOVE.w	D0, -(A7)
-	BSR.w	loc_000054DA
+	BSR.w	loc_000054DA ; Rotate when timer%$F==0
 	MOVE.w	(A7)+, D0
 	CMP.b	$2(A2), D0
 	BEQ.b	loc_000048D4
 loc_000048C6:
-	CMPI.b	#$F0, $3(A2)
-	BCC.b	loc_000048D2
+	CMPI.b	#$F0, $3(A2) ; Fire rate
+	BCC.b	loc_000048D2 ; Branch if $3(A2)>=#$F0
 	ADDQ.b	#1, $3(A2)
 loc_000048D2:
 	RTS
@@ -5004,7 +5036,7 @@ loc_000048D4:
 	ADDI.w	#$000C, D1
 	BRA.w	loc_000053E0
 loc_000048FA:
-	; @ Behavior: Tanks
+	; @ Tank
 	BSR.w	loc_00004E74
 	CMPI.b	#$10, $2(A2)
 	BEQ.w	loc_00004AAA
@@ -5014,6 +5046,7 @@ loc_000048FA:
 	BEQ.w	loc_00004AAA
 	RTS
 loc_0000491E:
+	; @ Turret attachment
 	MOVEA.l	$10(A2), A3
 	MOVE.w	$6(A3), $6(A2)
 	MOVE.w	$A(A3), $A(A2)
@@ -5034,6 +5067,7 @@ loc_0000494E:
 loc_0000495A:
 	RTS
 loc_0000495C:
+	; @ Artillery
 	MOVE.l	$FFFF823E, D0	;Predicted (Offset array entry)
 	ADD.l	D0, $A(A2)
 	TST.w	$FFFFB292
@@ -5065,6 +5099,7 @@ loc_000049BA:
 	ADDI.w	#$000C, D1
 	BRA.w	loc_0000534A
 loc_000049CE:
+	; @ Torpedo boat
 	LEA	loc_00004FDC, A5	;Predicted (Offset array entry)
 	BSR.w	loc_00004E7A
 	BSR.w	loc_00004AAA
@@ -5134,11 +5169,15 @@ loc_00004A8C:
 	ADDI.w	#$0024, D1
 	BRA.w	loc_00005370
 loc_00004AA0:
-	; @ Behavior: Static things
+	; @ Static object
 	; It does nothing besides scroll down and check for culling
 	MOVE.l	$FFFF823E, D0
 	ADD.l	D0, $A(A2) ; Make y position advance with scrolling
-loc_00004AAA: ; Delete object and attachment if y out of bounds
+loc_00004AAA:
+	; @ Y cull
+	; Delete object and attachment if y out of bounds
+	; Objects calling this routine (besides Static):
+	; Transport, Turret, Tank, Artillery, Torpedo boat, Boat, Otakebi.
 	TST.w	$A(A2)
 	BMI.b	loc_00004ACC ; Branch if y<0
 	CMPI.w	#$0160, $A(A2)
@@ -5154,7 +5193,9 @@ loc_00004AC8:
 loc_00004ACC:
 	RTS
 
-loc_00004ACE: ; @ Displace x,y based on sprite rotation
+loc_00004ACE:
+	; @ Boat
+	; Displace x,y based on sprite rotation
 	LEA	loc_0000515C, A3 ; A3=Angles table (fast)
 	MOVE.l	$FFFF823E, D0
 	ADD.l	D0, $A(A2)
@@ -5172,12 +5213,13 @@ loc_00004ACE: ; @ Displace x,y based on sprite rotation
 	BEQ.b	loc_00004AAA	; If angle==16, check bounds.
 	RTS
 loc_00004B06:
+	; @ Hovercraft Ablage
 	LEA	loc_000050DC, A5	;Predicted (Offset array entry)
 	CMPI.w	#9, $FFFFF624.w
 	BNE.b	loc_00004B1C
 	LEA	loc_0000525C, A5
 	BRA.b	loc_00004B2A
-loc_00004B1C: ; @ Used by Ablage
+loc_00004B1C:
 	CMPI.w	#2, $FFFFF624.w
 	BNE.b	loc_00004B2A
 	LEA	loc_000051DC, A5
@@ -5241,6 +5283,7 @@ loc_00004BD2:
 	LEA	loc_0000515C, A5	;Predicted (Offset array entry)
 	BRA.w	loc_00004E7A
 loc_00004BDC:
+	; @ Green launcher (horizontal)
 	BSR.w	loc_00004C96	;Predicted (Offset array entry)
 	MOVE.b	$2(A2), D0
 	MOVE.w	D0, -(A7)
@@ -5319,6 +5362,7 @@ loc_00004CBA:
 	MOVE.b	#2, $2C(A2)
 	RTS
 loc_00004CC2:
+	; @ Green launcher (vertical)
 	BSR.b	loc_00004C96	;Predicted (Offset array entry)
 	MOVE.b	$2(A2), D0
 	MOVE.w	D0, -(A7)
@@ -5359,6 +5403,7 @@ loc_00004D24:
 loc_00004D40:
 	RTS
 loc_00004D42:
+	; @ Long range bomber
 	LEA	loc_000050DC, A5	;Predicted (Offset array entry)
 	BSR.w	loc_00004E7A
 	ADDQ.b	#1, $3(A2)
@@ -5407,6 +5452,7 @@ loc_00004DBC:
 	ADDI.w	#$0014, D1
 	BRA.w	loc_00006EF0
 loc_00004DEC:
+	; @ Otakebi
 	LEA	loc_000050DC, A5	;Predicted (Offset array entry)
 	BSR.w	loc_00004E7A
 	BSR.w	loc_00004AAA	;Check y out of bounds
@@ -5743,17 +5789,19 @@ loc_000054D4:
 	BSR.b	loc_000054A4
 	BRA.w	loc_0000677E
 loc_000054DA:
-	MOVE.w	$FFFFB28E, D0
+	; @ Rotate towards player
+	; > A2: self
+	MOVE.w	$FFFFB28E, D0 ; D0=player.x
 	ADDI.w	#$0010, D0
-	ADD.w	$FFFFF622.w, D0
-	MOVE.w	$6(A2), D2
+	ADD.w	$FFFFF622.w, D0 ; D0+=scroll_offset_x
+	MOVE.w	$6(A2), D2 ; D2=self.x
 	ADDI.w	#$0010, D2
-	SUB.w	D2, D0
+	SUB.w	D2, D0 ; D0=dx=player.x+16+scroll_x-(self.x+16)
 	MOVE.w	$A(A2), D1
 	ADDI.w	#$0010, D1
-	MOVE.w	$FFFFB290, D2
+	MOVE.w	$FFFFB290, D2 ; D2=player.x
 	ADDI.w	#$0010, D2
-	SUB.w	D2, D1
+	SUB.w	D2, D1 ; D1=dy=self.y+16-(player.y+16)
 	BSR.w	loc_0000632E
 	MOVE.b	$2(A2), D5
 	BSR.w	loc_00005540
@@ -5761,6 +5809,7 @@ loc_000054DA:
 	ANDI.b	#$1F, D5
 	MOVE.b	D5, $2(A2)
 	RTS
+
 loc_0000551E:
 	MOVE.w	D3, D0
 	ADDI.w	#$0010, D0
@@ -5772,6 +5821,7 @@ loc_0000551E:
 	ADDI.w	#$0010, D1
 	SUB.w	D4, D1
 	BRA.w	loc_0000632E
+
 loc_00005540:
 	CLR.b	D1
 	MOVE.b	D5, D0
@@ -5792,6 +5842,7 @@ loc_00005556:
 	NEG.b	D1
 loc_0000555E:
 	RTS
+
 loc_00005560:
 	CMPI.b	#8, D5
 	BCC.b	loc_0000556C
@@ -6932,6 +6983,8 @@ loc_00006322:
 loc_0000632C:
 	RTS
 loc_0000632E:
+	; @ called by rot
+	; > D0,D1=dx,dy
 	MOVEM.l	A1/A0, -(A7)
 	TST.w	D0
 	BMI.b	loc_00006342
@@ -7412,7 +7465,7 @@ loc_00007112:
 loc_00007120:
 	MOVEM.l	A3/A1/D6/D5/D4/D3/D2/D1/D0, -(A7)
 	LEA	loc_00022BD6, A3
-	BSR.w	loc_00007D88
+	BSR.w	loc_00007D88_rand
 	ANDI.w	#$000F, D0
 	MOVE.w	D0, D3
 loc_00007134:
@@ -8123,12 +8176,12 @@ loc_00007D7A:
 	BSR.w	loc_00008FEE
 	MOVEM.l	(A7)+, D0/D1/D2/D3/D4/D5/D6/D7/A0/A1/A2/A3/A4/A5/A6
 	BRA.b	loc_00007D64
-loc_00007D88:
+loc_00007D88_rand:
 	; @ Random number generator
-	; Result in D1 and RAM:F636
+	; Result in D0,D1 and RAM:F636
 	MOVE.l	$FFFFF636.w, D1
 	BNE.b	loc_00007D94
-	MOVE.l	#$2A6D365A, D1 ; If D1==0 write this value
+	MOVE.l	#$2A6D365A, D1
 loc_00007D94:
 	MOVE.l	D1, D0
 	ASL.l	#2, D1

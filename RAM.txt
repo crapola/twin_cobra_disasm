@@ -2,7 +2,9 @@ Scrolling
 ---------
 
 823E.l: Scroll speed.
-Value added to ground sprites y to simulate scrolling. =00008000
+Value added to ground sprites y to make them move along with map.
+Depending on the frame it's 0 or $00008000.
+Probably changes for synchronization reasons.
 
 823A.w: Boss timer.
 
@@ -51,6 +53,8 @@ B6EC.w: Freeze enemies if !=0.
 This value is set to FFFF to stop enemies during some sequences, such as the
 chevron transition effects after player explodes.
 
+B6EE: temp value
+
 Object arrays:
 Arrays have 31 elements.
 Object structure is 48 bytes.
@@ -79,6 +83,8 @@ F620.w: Scrolling horizontal offset for background.
 F622.w: Scrolling horizontal offset for sprites.
 F624.w: Stage number.
 F62A.b: VBLANK synchronization related.
+F636.w: Random number seed.
+
 
 FE00: Stack.
 
