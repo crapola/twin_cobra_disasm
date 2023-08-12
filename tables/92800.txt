@@ -1,0 +1,97 @@
+92800 Areas
+-----------
+
+The table at 92800 is where the game stores the locations of enemies and
+destructible objects populating the stages.
+It's a jagged array of 122 entries. Each entry corresponds to an area.
+The first part holds offsets from 92800 that index the second part.
+The second part holds area data in form of variable sized arrays ending with a
+terminator 0xFFFFFFFF.
+
+There are 12 areas per stage and 10 stages. The first area of a stage is always
+empty.
+
+Here are the first four areas in the game. The first one is an empty
+landing pad area, so there only a terminator.
+
+┌─────────┬┬──────┬──────┬───────┬───────────────────┐
+│ address ││ time │ s_id │ param │    description    │
+├─────────┼┼──────┼──────┼───────┼───────────────────┤
+│ 929E8   ││ ff   │ ff   │ ffff  │ End               │
+│═════════││══════│══════│═══════│═══════════════════│
+│ 929EC   ││ 00   │ 45   │ 0001  │ Helicopter        │
+│ 929F0   ││ 04   │ 45   │ 0003  │ Helicopter        │
+│ 929F4   ││ 20   │ 45   │ 0006  │ Helicopter        │
+│ 929F8   ││ 24   │ 45   │ 0004  │ Helicopter        │
+│ 929FC   ││ 40   │ 45   │ 0000  │ Helicopter        │
+│ 92A00   ││ 44   │ 45   │ 0002  │ Helicopter        │
+│ 92A04   ││ 60   │ 45   │ 0006  │ Helicopter        │
+│ 92A08   ││ 64   │ 45   │ 0004  │ Helicopter        │
+│ 92A0C   ││ 80   │ 45   │ 0003  │ Helicopter        │
+│ 92A10   ││ 84   │ 45   │ 0005  │ Helicopter        │
+│ 92A14   ││ 91   │ 08   │ 6c03  │ Turret            │
+│ 92A18   ││ a0   │ 45   │ 0001  │ Helicopter        │
+│ 92A1C   ││ a4   │ 45   │ 0003  │ Helicopter        │
+│ 92A20   ││ c1   │ 08   │ 2403  │ Turret            │
+│ 92A24   ││ e0   │ a2   │ 0018  │ Transport         │
+│ 92A28   ││ ff   │ ff   │ ffff  │ End               │
+│═════════││══════│══════│═══════│═══════════════════│
+│ 92A2C   ││ 11   │ 08   │ 6c03  │ Turret            │
+│ 92A30   ││ 19   │ 08   │ 1c03  │ Turret            │
+│ 92A34   ││ 31   │ 08   │ 2c03  │ Turret            │
+│ 92A38   ││ 31   │ 08   │ 6403  │ Turret            │
+│ 92A3C   ││ 60   │ 00   │ 003f  │ Tank              │
+│ 92A40   ││ 88   │ 00   │ 0019  │ Tank              │
+│ 92A44   ││ 88   │ 00   │ 001a  │ Tank              │
+│ 92A48   ││ e0   │ a2   │ 0017  │ Transport         │
+│ 92A4C   ││ f0   │ 00   │ 0014  │ Tank              │
+│ 92A50   ││ f0   │ 00   │ 0015  │ Tank              │
+│ 92A54   ││ f0   │ 00   │ 0016  │ Tank              │
+│ 92A58   ││ ff   │ ff   │ ffff  │ End               │
+│═════════││══════│══════│═══════│═══════════════════│
+│ 92A5C   ││ 00   │ 00   │ 0028  │ Tank              │
+│ 92A60   ││ 00   │ 00   │ 0029  │ Tank              │
+│ 92A64   ││ 00   │ 00   │ 002a  │ Tank              │
+│ 92A68   ││ 10   │ 00   │ 0014  │ Tank              │
+│ 92A6C   ││ 10   │ 00   │ 0015  │ Tank              │
+│ 92A70   ││ 10   │ 00   │ 0016  │ Tank              │
+│ 92A74   ││ 3c   │ 0a   │ 3c01  │ Static T building │
+│ 92A78   ││ 60   │ 00   │ 0051  │ Tank              │
+│ 92A7C   ││ 68   │ 00   │ 0051  │ Tank              │
+│ 92A80   ││ 78   │ 00   │ 0064  │ Tank              │
+│ 92A84   ││ 80   │ 00   │ 0065  │ Tank              │
+│ 92A88   ││ 88   │ 00   │ 0066  │ Tank              │
+│ 92A8C   ││ 88   │ 00   │ 0051  │ Tank              │
+│ 92A90   ││ 90   │ 00   │ 0051  │ Tank              │
+│ 92A94   ││ a8   │ 00   │ 001b  │ Tank              │
+│ 92A98   ││ b0   │ 00   │ 001c  │ Tank              │
+│ 92A9C   ││ b0   │ 00   │ 0052  │ Tank              │
+│ 92AA0   ││ b8   │ 00   │ 0053  │ Tank              │
+│ 92AA4   ││ b8   │ 00   │ 001d  │ Tank              │
+│ 92AA8   ││ d8   │ 00   │ 001e  │ Tank              │
+│ 92AAC   ││ d8   │ 00   │ 0054  │ Tank              │
+│ 92AB0   ││ e0   │ 00   │ 0055  │ Tank              │
+│ 92AB4   ││ e0   │ 00   │ 001f  │ Tank              │
+│ 92AB8   ││ e0   │ a2   │ 0018  │ Transport         │
+│ 92ABC   ││ e8   │ 00   │ 0020  │ Tank              │
+│ 92AC0   ││ ff   │ ff   │ ffff  │ End               │
+└─────────┴┴──────┴──────┴───────┴───────────────────┘
+
+time:
+This value represents at which point the enemy is spawned during the area
+processing and scrolling. It ranges from 0 (beginning) to 0xFF (end).
+It has a granularity of 4 (the first two bits are ignored).
+Due to scrolling it implicitely affects the vertical position.
+
+s_id:
+The type of object to be spawned. The lower bits (0 to 5) give the index into
+table 22956.
+Bits 6,7=???
+
+param:
+Parameter passed to the spawn function. Its meaning depends on the object type.
+Some examples:
+- Helicopters: usually x position.
+- Rotating turrets: upper byte is x position, lower byte is turret appearance.
+- Trajectory based enemies: param is a reference to the sequence. The sequence
+itself will determine the starting position.

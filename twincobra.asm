@@ -1084,7 +1084,7 @@ loc_0000147C:
 	CLR.l	D0
 	MOVE.l	D0, $FFFF8268.w
 loc_000014AA:
-	DIVU.w	#$0400, D0
+	DIVU.w	#$0400, D0 ; $400 is area size
 	MOVE.w	D0, $FFFF826C.w
 	ADD.w	D0, D0
 	ADD.w	D0, D0
@@ -1492,9 +1492,9 @@ loc_000019D4:
 loc_000019E0:
 	ADDQ.l	#6, A7
 	RTS
-loc_000019E4:
-	BTST.b	#0, $FFFF826B.w
-	BEQ.b	loc_00001A04
+loc_000019E4: ; @ Scroll tiles
+	BTST.b	#0, $FFFF826B.w ; Check first bit of scroll_counter
+	BEQ.b	loc_00001A04 ; If zero, do nothing
 	SUBQ.w	#1, $FFFFF61C.w
 	SUBQ.w	#1, $FFFFF61E.w
 	MOVE.w	$FFFFF61C.w, D0
@@ -2584,7 +2584,7 @@ loc_000029E8:
 	BSR.w	loc_00007BD8
 	BSR.w	loc_00002DFA
 	CLR.b	$FFFFF004.w
-loc_000029F8:
+loc_000029F8: ; @ Checkpoint positioning
 	MOVEQ	#2, D0
 	BSR.w	loc_00007BD8
 	BSR.w	loc_000015A2
@@ -3265,8 +3265,8 @@ loc_0000323E:
 loc_0000324C:
 	; @ Object construction
 	; Inputs:
-	;	A2=Self array address
-	;	A3=$22956 table related entry
+	; > A2: Self array address
+	; > A3: $22956 table related entry
 	;
 	MOVE.w	$8(A3), D1 ; D1=attach
 	BEQ.b	loc_00003280 ; Branch if nothing attached
@@ -3541,7 +3541,7 @@ loc_0000354E:
 	RTS
 loc_00003550:
 loc_0000355C:
-	; @ Enemy scene spawning
+	; @ Enemy spawning
 	; Function called every frame
 	;
 	; Select scene array A0 according to loop we are in
@@ -3557,6 +3557,7 @@ loc_0000356E:
 	ANDI.b	#$0F, D1 ; D1=D0 & 15
 	BNE.b	loc_000035E8 ; Return if Z=0 (D1 is not zero) which is 15/16 of times
 	; Continue below every 16 frame
+	; For reference, this is every 8 pixels of tile scrolling
 	LSR.l	#4, D0 ; D0/=16
 	MOVE.l	D0, D1 ; D1=D0
 	LSR.l	#6, D0 ; D0/=64
@@ -3566,15 +3567,16 @@ loc_0000356E:
 	ADDA.l	#$00092800, A1 ; A1 points to scene definition
 	; Different scene every 1024 frames
 	ANDI.w	#$003F, D1
-	; D1 counts from 0 to 63 for the duration of this scene
+	; D1 counts from 0 to 63 for the duration of this area
 	; It's used to check what enemy in array to spawn
+	; Since an area is 64 tiles, that's the tile offset
 loc_0000359A: ; @ Read A1 entries
 	CMPI.l	#$FFFFFFFF, (A1) ; Is it terminator?
 	BEQ.b	loc_000035E8 ; If so, go return
-	MOVE.b	(A1), D0 ; Read first byte, which is y
-	LSR.b	#2, D0 ; D0/=2
+	MOVE.b	(A1), D0 ; Read first byte, which is t
+	LSR.b	#2, D0 ; D0/=4
 	CMP.b	D1, D0 ;
-	BNE.b	loc_000035E4 ; Skip if D1 hasn't reached this y yet
+	BNE.b	loc_000035E4 ; Skip if D1 hasn't reached this t yet
 	MOVEM.l	A1/D1, -(A7) ; Push A1 and D1
 	BSR.w	loc_000035EA
 	CMPI.w	#$03E7, (A3) ; A3 points to the $22956 entry
@@ -3617,12 +3619,14 @@ loc_000035EA:
 ;	D4=x
 ;	D5=y
 ;
-	MOVE.b	$1(A1), D3 ; D3=A1[1] A1=929E8
+	MOVE.b	$1(A1), D3 ; D3=spawn_flag_id
 	ANDI.w	#$003F, D3 ; D3 is in range (0,63)
+	; What happens to D3 upper bits 6,7 ?
+	; Some enemies have it set, but they're not used.
 	LSL.w	#4, D3 ; D3*=16 (range is 16,1008 | 0)
 	LEA	loc_00022956, A3
 	ADDA.w	D3, A3
-	MOVEA.l	$C(A3), A2 ; A2=22956+A1[1]*16 +12 (last long of item)
+	MOVEA.l	$C(A3), A2 ; A2=init_func 22956+A1[1]*16 +12 (last long of item)
 	JMP	(A2) ; @ Spawns an enemy
 loc_00003602: ; @ 4 Combat helicopter
 	MOVE.w	$2(A1), D4 ; D4=x
@@ -5038,6 +5042,7 @@ loc_000048D4:
 loc_000048FA:
 	; @ Tank
 	BSR.w	loc_00004E74
+	; Check for vertical culling if tank isn't going up.
 	CMPI.b	#$10, $2(A2)
 	BEQ.w	loc_00004AAA
 	CMPI.b	#8, $2(A2)
@@ -5280,6 +5285,7 @@ loc_00004BBC:
 	BSR.w	loc_00005370
 	BRA.b	loc_00004B66
 loc_00004BD2:
+	; @ Boat move and stop
 	LEA	loc_0000515C, A5	;Predicted (Offset array entry)
 	BRA.w	loc_00004E7A
 loc_00004BDC:
@@ -5485,21 +5491,32 @@ loc_00004E24:
 	ADDI.w	#$002C, D1
 	BRA.w	loc_0000534A
 loc_00004E60:
+	; @ Sequence based movement (slow speed)
+	; Called by Boss 1
 	LEA	loc_0000505C, A5
 	BRA.w	loc_00004E7A
 loc_00004E6A:
+	; @ Sequence based movement (fast speed)
+	; Called by other bosses
 	LEA	loc_0000515C, A5
 	BRA.w	loc_00004E7A
 loc_00004E74:
+	; @ Sequence based movement (medium speed)
+	; Called by Transport and Tank
 	LEA	loc_000050DC, A5
-loc_00004E7A: ; @ Movement of ground enemies and carrier
+loc_00004E7A:
+	; @ Sequence based movement
+	; Called by:
+	; Torpedo boat, Ablage, Green launchers, Long range bomber, Otakebi.
+	; > A2: Object struct (this pointer)
+	; > A5: Trigonometry table
 	TST.b	$14(A2) ; Check if camera scroll should affect Y
 	BEQ.b	loc_00004E8A
 	MOVE.l	$FFFF823E, D0
 	ADD.l	D0, $A(A2) ; Write Y
 loc_00004E8A:
 	TST.b	$24(A2) ; Test sequence counter
-	BEQ.b	loc_00004EC4 ; If zero read next
+	BEQ.b	loc_00004EC4 ; If zero, perform current action
 loc_00004E90: ; @ Displace towards angle
 	SUBQ.b	#1, $24(A2); ; Decrease sequence timer
 	CLR.w	D1
@@ -5520,17 +5537,20 @@ loc_00004E90: ; @ Displace towards angle
 loc_00004EC2:
 	RTS
 loc_00004EC4:
-	LEA	loc_00096800, A3
-	MOVE.w	$26(A2), D0
+	LEA	loc_00096800, A3 ; A3=Sequences array
+	MOVE.w	$26(A2), D0 ; D0=Current sequence action offset
 loc_00004ECE:
 	TST.w	D0
-	BMI.b	loc_00004EF8 ; Return if N=1 (D0<0)
+	; Return if N=1 (D0<0) ; if bit 15 of D0.w is set
+	; This happens if a previous action wrote $FFF0 to $26(A2)
+	BMI.b	loc_00004EF8
+	; Read action in D1
 	MOVE.w	(A3,D0.w), D1
-	; D1 word encodes action|angle and counter
-	; Upper byte is split in two nibbles:
-	; action 4 bits, angle 4 bits
+	; D1 word encodes function|angle and counter
+	; Upper byte is split in two nibbles
+	; function 4 bits, angle 4 bits
 	; Lower byte is duration 8 bits
-	CMPI.w	#$FFFF, D1
+	CMPI.w	#$FFFF, D1 ; if D1==$FFFF, skip to next immediately
 	BEQ.b	loc_00004F3A
 	MOVE.w	D1, D2
 	MOVE.w	D1, D3
@@ -5542,7 +5562,11 @@ loc_00004ECE:
 	ANDI.w	#$003C, D1 ; Make D1 aligned to long and <64
 	LEA	loc_00004EFA, A4
 	MOVEA.l	(A4,D1.w), A4
-	JMP	(A4) ; Execute action
+	JMP	(A4) ; Execute one of the functions below with parameters:
+	; > D2: action
+	; > D3: angle
+	; D3 still bundles function bits, but those are zero when D3 is used
+	; as angle since the Move action is function 0.
 loc_00004EF4:
 	ADDQ.w	#2, $26(A2) ; Advance seq
 loc_00004EF8:
@@ -5554,10 +5578,10 @@ loc_00004EFA:
 	dc.l $00004F54 ; 2: Toggle invincible (XOR $80)
 	dc.l $00004F5C ; 3: Toggle ? (XOR $8)
 	dc.l $00004F88 ; 4: Skip
-	dc.l $00004F72 ; 5: Toggle ?? (XOR $20)
+	dc.l $00004F72 ; 5: Toggle visible (XOR $20)
 	dc.l $00004F94 ; 6: Goto seq pointed by next word
-	dc.l $00004FA0 ; 7: what is 28(a2)
-	dc.l $00004FAA ; 8: also
+	dc.l $00004FA0 ; 7: Call
+	dc.l $00004FAA ; 8: Return from Call
 	dc.l $00004F88 ; 9: Ignore
 	dc.l $00004F88 ; A: Ignore
 	dc.l $00004FB0 ; B: Decrease x
@@ -5570,7 +5594,7 @@ loc_00004F3A:
 loc_00004F3E:
 	MOVE.b	D3, $25(A2) ; Write angle
 loc_00004F42:
-	MOVE.b	D2, $24(A2)
+	MOVE.b	D2, $24(A2); Initialize sequence timer
 	BSR.w	loc_00004E90 ; Move object
 	BRA.b	loc_00004EF4 ; Advance and return
 loc_00004F4C:
@@ -5604,10 +5628,10 @@ loc_00004F98:
 	MOVE.w	D0, $26(A2)
 	BRA.w	loc_00004ECE
 loc_00004FA0:
-	MOVE.w	D0, D1	;Predicted (Offset array entry)
-	ADDQ.w	#6, D1
-	MOVE.w	D1, $28(A2)
-	BRA.b	loc_00004F94
+	MOVE.w	D0, D1 ; D0=this sequence offset
+	ADDQ.w	#6, D1 ; D1=3rd action word from here
+	MOVE.w	D1, $28(A2) ;
+	BRA.b	loc_00004F94; Goto
 loc_00004FAA:
 	MOVE.w	$28(A2), D0	;Predicted (Offset array entry)
 	BRA.b	loc_00004F98
@@ -5876,6 +5900,7 @@ loc_000055A4:
 	DBF	D0, loc_000055A4
 	RTS
 loc_000055AC:
+	; @ Boss 1
 	BSR.w	loc_00005970	;Predicted (Offset array entry)
 	BSR.w	loc_00005918
 	LEA	$FFFFB5ED, A1
@@ -5953,6 +5978,7 @@ loc_0000566A:
 	LEA	$FFFFC927.w, A0
 	BRA.b	loc_00005650
 loc_00005670:
+	; @ Boss 2
 	BSR.w	loc_00005A1C	;Predicted (Offset array entry)
 	BSR.w	loc_00005918
 	BSR.b	loc_0000567E
@@ -5982,6 +6008,7 @@ loc_000056A0:
 	MOVEM.l	(A7)+, D0/D1/D2/D3/D4/D5/D6/D7/A0/A1/A2/A3/A4/A5/A6
 	RTS
 loc_000056BE:
+	; @ Boss 3 low
 	BSR.w	loc_00005A78	;Predicted (Offset array entry)
 	BSR.w	loc_00005918
 	LEA	$FFFFB5ED, A1
@@ -5989,17 +6016,21 @@ loc_000056CC:
 	BSR.w	loc_00005630
 	BRA.w	loc_00004E6A
 loc_000056D4:
+	; @ Boss 3 high
 	BSR.w	loc_00005AFA	;Predicted (Offset array entry)
 	BSR.w	loc_00005918
 	LEA	$FFFFB5F2, A1
 	BRA.b	loc_000056CC
 loc_000056E4:
+	; @ Boss 4 orange
 	BSR.w	loc_00005B4A	;Predicted (Offset array entry)
 	BRA.w	loc_00004E6A
 loc_000056EC:
+	; @ Boss 4 grey
 	BSR.w	loc_00005BD4	;Predicted (Offset array entry)
 	BRA.w	loc_00004E6A
 loc_000056F4:
+	; @ Boss 5
 	BSR.w	loc_00005C12	;Predicted (Offset array entry)
 	BSR.b	loc_000056FE
 	BRA.w	loc_00004E6A
@@ -6038,16 +6069,19 @@ loc_00005752:
 	MOVE.w	#$0200, D4
 	BRA.b	loc_00005736
 loc_0000575E:
+	; @ Boss 6 blue
 	BSR.w	loc_00005D42	;Predicted (Offset array entry)
 	LEA	$FFFFB5ED, A1
 	BSR.w	loc_0000563E
 	BRA.w	loc_00004E6A
 loc_00005770:
+	; @ Boss 6 green
 	BSR.w	loc_00005E4C	;Predicted (Offset array entry)
 	LEA	$FFFFB5F1, A1
 	BSR.w	loc_00005630
 	BRA.w	loc_00004E6A
 loc_00005782:
+	; @ Boss 7 left
 	BSR.w	loc_00005E94	;Predicted (Offset array entry)
 	LEA	$FFFFB5ED, A1
 	BSR.w	loc_0000563E
@@ -6063,11 +6097,13 @@ loc_0000579A:
 loc_000057AE:
 	RTS
 loc_000057B0:
+	; @ Boss 7 right
 	BSR.w	loc_00005F26	;Predicted (Offset array entry)
 	LEA	$FFFFB5F0, A1
 	BSR.w	loc_0000563E
 	BRA.w	loc_00004E6A
 loc_000057C2:
+	; @ Boss 7 middle
 	MOVE.w	$16(A2), D0	;Predicted (Offset array entry)
 	LSR.w	#1, D0
 	CMP.w	$E(A2), D0
@@ -6076,19 +6112,24 @@ loc_000057C2:
 loc_000057D6:
 	BRA.w	loc_00004E6A
 loc_000057DA:
+	; @ Boss 8 low
 	BSR.w	loc_00005F34	;Predicted (Offset array entry)
 	BRA.w	loc_00004E6A
 loc_000057E2:
+	; @ Boss 8 high
 	BSR.w	loc_00005A1C	;Predicted (Offset array entry)
 	BSR.w	loc_00005918
 	BRA.w	loc_00004E6A
 loc_000057EE:
+	; @ Boss 9 green
 	BSR.w	loc_00005F92	;Predicted (Offset array entry)
 	BRA.w	loc_00004E6A
 loc_000057F6:
+	; @ Boss 9 blue
 	BSR.w	loc_0000600E	;Predicted (Offset array entry)
 	BRA.w	loc_00004E6A
 loc_000057FE:
+	; @ Boss 10 left
 	BSR.w	loc_000060A8	;Predicted (Offset array entry)
 	BSR.b	loc_00005808
 	BRA.w	loc_00004E6A
@@ -6135,6 +6176,7 @@ loc_0000586C:
 	MOVE.w	#$0208, D4
 	BRA.b	loc_0000583A
 loc_00005878:
+	; @ Boss 10 right
 	BSR.w	loc_00006196	;Predicted (Offset array entry)
 	BSR.b	loc_00005882
 	BRA.w	loc_00004E6A
@@ -8036,13 +8078,13 @@ loc_000079B4:
 	MOVE.l	#$0009AC00, $FFFFF784.w
 	MOVE.b	#1, $FFFFF782.w
 	MOVE.w	#5, $FFFFF624.w
-	MOVE.l	#$0000D000, $FFFF8268
+	MOVE.l	#$0000D000, $FFFF8268 ; Attract mode start
 	BSR.w	loc_00002988
 	BSR.w	loc_000029F8
-	CLR.b	$FFFFB2B7
-	MOVE.b	#3, $FFFFB2B6
-	MOVE.b	#$0A, $FFFFB2B8
-	MOVE.b	#6, $FFFFB2A0
+	CLR.b	$FFFFB2B7 ; Red weapon
+	MOVE.b	#3, $FFFFB2B6 ; 3 bombs
+	MOVE.b	#$0A, $FFFFB2B8 ; Full power
+	MOVE.b	#6, $FFFFB2A0 ; Difficulty 6
 	BRA.w	loc_00000D92
 loc_00007A14:
 	LEA	$FFFFCCA4.w, A1
@@ -8665,7 +8707,7 @@ loc_0000835E:
 	TST.w	$FFFFF000.w
 	BNE.b	loc_00008394
 	MOVE.l	#$7C000003, loc_00C00004
-	MOVE.l	$FFFFF620.w, D0
+	MOVE.l	$FFFFF620.w, D0 ; Horizontal scrolling
 	NEG.w	D0
 	SWAP	D0
 	NEG.w	D0

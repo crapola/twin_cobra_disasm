@@ -14,6 +14,10 @@ Probably changes for synchronization reasons.
 It determines player location across all five stages.
 A loop corresponds to the range ($0000,$F000).
 
+When this value is odd, the tilemap scrolls upwards at the rate of
+1 pixel per frame.
+So the world is $F000/2=$7800 pixels.
+
 
 Player
 ------
@@ -79,6 +83,8 @@ F61A.w: Respite timer.
 If this value is above zero, it will decrease and enemies won't shoot.
 It's used to provide the player a moment of respite right after
 respawning.
+F61C.w: Tile scrolling
+F61E.w: Tile scrolling
 F620.w: Scrolling horizontal offset for background.
 F622.w: Scrolling horizontal offset for sprites.
 F624.w: Stage number.
