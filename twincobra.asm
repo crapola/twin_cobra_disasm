@@ -3724,15 +3724,16 @@ loc_0000370C:
 	RTS
 loc_0000370E:
 	; 0 Get sequence data for trajectory user
+	; > A1: 92800 entry
 	; Output:
 	;	D0=sequence
 	;	D3=
 	;	D4,D5=starting position
-	MOVE.w	$2(A1), D0 ; D0=Sequence...
-	ADD.w	D0, D0
+	MOVE.w	$2(A1), D0 ; D0=Sequence
+	ADD.w	D0, D0 ; D0*=4
 	ADD.w	D0, D0
 	LEA	loc_00096800, A2 ; Trajectories
-	MOVE.l	(A2,D0.w), D0
+	MOVE.l	(A2,D0.w), D0 ; D0=[96800+D0]
 	CLR.w	D4
 	MOVE.b	(A2,D0.w), D4
 	ADDI.b	#$40, D4
@@ -5042,7 +5043,7 @@ loc_000048D4:
 loc_000048FA:
 	; @ Tank
 	BSR.w	loc_00004E74
-	; Check for vertical culling if tank isn't going up.
+	; Check for vertical culling if tank isn't going up
 	CMPI.b	#$10, $2(A2)
 	BEQ.w	loc_00004AAA
 	CMPI.b	#8, $2(A2)
@@ -5576,10 +5577,10 @@ loc_00004EFA:
 	dc.l $00004F3E ; 0: Move
 	dc.l $00004F4C ; 1: Set angle to stop (coincides with angle of $10)
 	dc.l $00004F54 ; 2: Toggle invincible (XOR $80)
-	dc.l $00004F5C ; 3: Toggle ? (XOR $8)
+	dc.l $00004F5C ; 3: Toggle shooting (XOR $8)
 	dc.l $00004F88 ; 4: Skip
-	dc.l $00004F72 ; 5: Toggle visible (XOR $20)
-	dc.l $00004F94 ; 6: Goto seq pointed by next word
+	dc.l $00004F72 ; 5: Toggle layer (XOR $20)
+	dc.l $00004F94 ; 6: Goto seq pointed by next long
 	dc.l $00004FA0 ; 7: Call
 	dc.l $00004FAA ; 8: Return from Call
 	dc.l $00004F88 ; 9: Ignore
@@ -5587,8 +5588,8 @@ loc_00004EFA:
 	dc.l $00004FB0 ; B: Decrease x
 	dc.l $00004F8C ; C: Ignore
 	dc.l $00004F8C ; D: Ignore
-	dc.l $00004FC0 ; E: Stop object movement and end sequence
-	dc.l $00004FD4 ; F: Just end sequence
+	dc.l $00004FC0 ; E: Delete object
+	dc.l $00004FD4 ; F: End sequence
 loc_00004F3A:
 	BRA.w	loc_00004F8C
 loc_00004F3E:
@@ -5630,11 +5631,11 @@ loc_00004F98:
 loc_00004FA0:
 	MOVE.w	D0, D1 ; D0=this sequence offset
 	ADDQ.w	#6, D1 ; D1=3rd action word from here
-	MOVE.w	D1, $28(A2) ;
-	BRA.b	loc_00004F94; Goto
+	MOVE.w	D1, $28(A2) ; Save return address
+	BRA.b	loc_00004F94 ; Do a Goto
 loc_00004FAA:
-	MOVE.w	$28(A2), D0	;Predicted (Offset array entry)
-	BRA.b	loc_00004F98
+	MOVE.w	$28(A2), D0 ; Get return address back into D0
+	BRA.b	loc_00004F98 ;
 loc_00004FB0:
 	CMPI.w	#6, $FFFFF624.w ; Check stage number
 	BCS.b	loc_00004F8C ; Skip if C==1 (stage<6)

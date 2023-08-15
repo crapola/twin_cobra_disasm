@@ -1,0 +1,36 @@
+96800 Sequences
+---------------
+
+The ROM address 96800 is where the game stores predefined enemy trajectories,
+of which there are 576.
+These sequences are made of word-sized instructions. They don't have clearly
+defined boundaries or terminators.
+The first three words of a sequence set the initial position and angle.
+
+Examples:
+
+The first tank of the game is declared at 92A3C.
+This is the rightmost of those three tanks that pop in and out of cover.
+Its parameter is 3F. To find the corresponding sequence:
+Take the value at 96800+3F*4=968FC, which is CD0.
+96800+CD0=974D0, this is where the sequence starts.
+
+Here it is in full:
+
+5800 ; 58=x
+b000 ; 80=y
+0000 ; Nibble 1=angle
+2000 ; Toggle invincible ON
+3000 ; Toggle shooting OFF
+4000 ; Nop
+1064 ; Stop 64 (goto's target)
+0015 ; Up 15
+2000 ; Toggle Invincible OFF
+3000 ; Toggle shooting ON
+0019 ; Up 19
+100f ; Stop F
+3000 ; Toggle shooting OFF
+0819 ; Down 19
+2000 ; Toggle Invincible ON
+0815 ; Down 15
+6000,0000,0cdc ; Goto +CDC (leads the Stop 64 above)
