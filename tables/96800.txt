@@ -17,9 +17,9 @@ Take the value at 96800+3F*4=968FC, which is CD0.
 
 Here it is in full:
 
-5800 ; 58=x
-b000 ; 80=y
-0000 ; Nibble 1=angle
+5800 ; x=58
+b000 ; y=B0
+0000 ; a=0 (nibble 1)
 2000 ; Toggle invincible ON
 3000 ; Toggle shooting OFF
 4000 ; Nop
@@ -33,4 +33,4 @@ b000 ; 80=y
 0819 ; Down 19
 2000 ; Toggle Invincible ON
 0815 ; Down 15
-6000,0000,0cdc ; Goto +CDC (leads the Stop 64 above)
+6000,0000,0cdc ; Goto +CDC (leads to the Stop 64 above)
