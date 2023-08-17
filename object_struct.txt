@@ -1,0 +1,56 @@
+Object structure
+----------------
+┌────────┬──────┬────────────────┐
+│ Offset │ Size │    Variable    │
+├────────┼──────┼────────────────┤
+│ 00     │ Byte │ id             │
+│ 01     │ Byte │ flags          │
+│ 02     │ Byte │ angle          │
+│ 03     │ Byte │ fire_timer     │
+│ 04     │ Byte │ timer          │
+│ 06     │ Word │ x              │
+│ 0A     │ Word │ y              │
+│ 0E     │ Word │ hit_points     │
+│ 10     │ Long │ attachment     │
+│ 14     │ Byte │ grounded       │
+│ 16     │ Word │ hit_points_max │
+│ 1A     │ Byte │ flash_timer    │
+│ 1B     │ Byte │ flash          │
+│ 24     │ Byte │ seq_timer      │
+│ 26     │ Word │ sequence       │
+│ 28     │ Word │ return_address │
+└────────┴──────┴────────────────┘
+
+id: Object ID. 0 means the slot is free.
+
+flags: Bit field.
+Bit 5 = Layer.
+Bit 6 = Attached object exists (loc_0000324C).
+Bit 7 = Invulnerable to player bullets.
+
+angle: Sprite rotation, in range (0,31).
+
+fire_timer: Used to time shooting.
+
+timer: General purpose timer.
+
+x,y: Object position.
+
+hit_points: Current health.
+
+attachment: Absolute RAM address to an attached object.
+
+grounded: Positioning. 0=stick with camera, other=scroll along with ground.
+
+hit_points_max: Starting health. Used as reference for displaying damage flash.
+
+flash_timer: Involved in random sparks location.
+
+flash: If not zero, display damage flashes and sparks.
+
+seq_timer: Time remaining for current sequence instruction.
+
+sequence: Current sequence instruction. The value is an offset from ROM:96800.
+
+return_address: The single item 'call stack' of the object, used by the
+Call and Return sequence instructions.
