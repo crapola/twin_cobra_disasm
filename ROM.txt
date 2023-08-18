@@ -1,0 +1,23 @@
+Header
+------
+0.l: 00FF FE00 SSP.
+4.l: 0000 0204 Entry point.
+70.l: 0000 83AE Level 4 Interrupt Autovector (VDP HBLANK).
+Not used; it points to an RTE instruction.
+78.l: 0000 82D6 Level 6 Interrupt Autovector (VBLANK).
+
+Game data
+---------
+16A0.w[10]: Boss timer values for each stage.
+22AE, 22FA: Extend values, 4 longs per array.
+3FFE: Jump table for enemy behavior.
+4EFA: Jump table of sequence actions (loc_00004E7A).
+505C, 63F8: Trigonometry tables.
+6F6A.w[8]: Enemy bullet velocities, one word per difficulty.
+Values are offset by 64. FF9C=bullet doesn't move.
+21608: Player bullets damage values.
+22956: Spawn function table.
+22C86.w[10][n]: Hit points arrays.
+Enemy health scales with player's weapon level.
+92800: Enemy area data.
+96800: Sequences.
