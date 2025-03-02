@@ -4034,7 +4034,7 @@ loc_00003C00:
 	BSR.w	loc_00003C0C
 	LEA	$FFFFBCF0.w, A2 ; A2=Ground enemies
 loc_00003C0C:
-	LEA	loc_00021608, A3 ; A3=
+	LEA	loc_00021608, A3 ; A3=Player bullet damage table ROM:21608
 	LEA	loc_000230E6, A4
 	MOVEQ	#$0000001F, D6 ; D6=Enemy array counter
 loc_00003C1A:
