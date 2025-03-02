@@ -7,7 +7,7 @@ Here is a picture showing the different levels for the red weapon:
 
 ![Red weapon](images/red_weapon_levels.png "Red weapon")
 
-We can see that there are two kinds of projectiles, one showing two rockets (1 damage value) and the other shows four (2 damage value). A table that maps projectiles to damage is at ROM:0x21608. Specifically, those red projectiles are at 0x2160D and 0x2160F.
+We can see that there are two kinds of projectiles, one showing two rockets (1 damage value) and the other shows four (2 damage value). A table that maps projectiles to damage is at ROM:0x21608.
 
 Weapon level 0 deals 1 damage per shot (DPS), and each level adds 1 DPS or 2, up to 12 DPS for the max level. The other weapon types follow a similar pattern.
 
