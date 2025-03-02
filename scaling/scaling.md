@@ -28,7 +28,7 @@ Some individual entries (indices above 10 can be disregarded):
 ![Tank](images/tank.png "Tank")
 ![Boss 1](images/boss_1.png "Boss 1")
 
-The general trend is a for enemies to spawn with up to ~3x their base hit-points value in proportion to the player's weapon level.
+The general trend is for enemies to spawn with up to ~3x their base hit-points value in linear proportion to the player's weapon level.
 The "zako" helicopters are one exception, always remaining at 1.
 
 The stage 1 boss has a base health of 128 hit-points, so you need to shoot it 128 times with the base weapon.
